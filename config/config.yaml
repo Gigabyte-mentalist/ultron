@@ -34,7 +34,7 @@ wake:
 
 stt:
   engine: "faster_whisper"
-  model: "large-v3-turbo"    # yoki lokal CT2 papka yo'li (o'zbekcha fine-tune)
+  model: "D:/ultron_data/models/stt/islomov-rubaistt-v2-medium-ct2"    # yoki lokal CT2 papka yo'li (o'zbekcha fine-tune)
   device: "cuda"
   compute_type: "int8_float16"
   language: "uz"
