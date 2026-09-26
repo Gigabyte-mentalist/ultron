@@ -2,4 +2,4 @@
 
 | Bosqich | Holat | Sana | Izoh |
 |---|---|---|---|
-| 01 Muhit | 🔄 | 2026-09-27 | Repo skeleti (C:\ultron), pyproject.toml, config.py, logging_setup.py, _cuda_dlls.py, __main__.py, check_env.py, download_models.py, testlar yaratildi. Qabul mezonlarini yakunlash uchun foydalanuvchi §3 qadamlarini (uv, Ollama, Qwen modeli, Windows/NVIDIA sozlamalari) bajarishi kerak, keyin `uv sync` va `check_env.py` ishga tushiriladi. |
+| 01 Muhit | ✅ | 2026-09-27 | uv, Ollama, Qwen3:8b o'rnatildi. `check_env.py` 13/13 ✅, `ollama ps` 100% GPU, `pytest` 8/8 o'tdi, `ruff check` toza. C: diskda joy tanqisligi (6.3 GB) sababli `data_dir` `config.local.yaml` orqali `D:/ultron_data`ga ko'chirildi (HF_HOME ham mos ravishda). |
