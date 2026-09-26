@@ -1,10 +1,11 @@
-data/
+/data/
 .venv/
 config/config.local.yaml
 __pycache__/
 *.pyc
 *.onnx
 *.wav
+!tests/data/*.wav
 .pytest_cache/
 .ruff_cache/
 *.egg-info/

@@ -4,16 +4,36 @@ version = "0.1.0"
 description = "Ultron — lokal o'zbek tilidagi shaxsiy ovozli AI yordamchi"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "pydantic>=2", "pyyaml", "loguru", "numpy<2.3",
-  "sounddevice", "soundfile", "scipy",
+  "pydantic>=2",
+  "pyyaml",
+  "loguru",
+  "numpy<2.3",
+  "sounddevice",
+  "soundfile",
+  "scipy",
   "onnxruntime",                 # Silero VAD, openWakeWord (CPU)
   "faster-whisper",
-  "nvidia-cublas-cu12", "nvidia-cudnn-cu12>=9,<10",   # CTranslate2 uchun CUDA DLL'lar
-  "torch", "transformers", "accelerate",               # MMS-TTS
+  "nvidia-cublas-cu12",
+  "nvidia-cudnn-cu12>=9,<10",   # CTranslate2 uchun CUDA DLL'lar
+  "torch",
+  "transformers",
+  "accelerate",               # MMS-TTS
   "ollama",
-  "rapidfuzz", "aiosqlite", "apscheduler>=3.10,<4",
-  "psutil", "pycaw", "comtypes", "screen-brightness-control", "send2trash",
-  "pywin32", "pystray", "pillow", "win11toast", "httpx", "mss",
+  "rapidfuzz",
+  "aiosqlite",
+  "apscheduler>=3.10,<4",
+  "psutil",
+  "pycaw",
+  "comtypes",
+  "screen-brightness-control",
+  "send2trash",
+  "pywin32",
+  "pystray",
+  "pillow",
+  "win11toast",
+  "httpx",
+  "mss",
+  "silero-vad>=6.2.3",
 ]
 
 [dependency-groups]
