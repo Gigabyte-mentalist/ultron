@@ -1,0 +1,104 @@
+app:
+  name: "Ultron"
+  language: "uz"
+  data_dir: "C:/ultron/data"
+  debug: false
+
+audio:
+  sample_rate: 16000
+  channels: 1
+  block_size: 512            # 32 ms, Silero VAD uchun
+  input_device: null         # null = default; yoki qurilma nomining bir qismi, masalan "Headset"
+  output_device: null
+  preroll_seconds: 2.0
+  output_volume: 0.9
+
+vad:
+  threshold: 0.5
+  min_speech_ms: 250
+  end_silence_ms: 700        # gap tugadi deb hisoblash uchun jimlik
+  max_utterance_s: 15
+  listen_timeout_s: 6        # wake word'dan keyin gap boshlanmasa
+
+wake:
+  mode: "stt_kws"            # "stt_kws" | "oww" | "hybrid"
+  phrases: ["altron", "ultron", "oltron", "altiron", "ultiron", "алтрон", "ультрон", "олтрон"]
+  fuzzy_threshold: 82        # rapidfuzz ratio, 0-100
+  max_prefix_words: 2        # wake word gapning birinchi N so'zida bo'lishi kerak
+  oww_model_path: "data/models/wake/altron.onnx"
+  oww_threshold: 0.35
+  oww_verify_with_stt: true  # oww trigger'ini STT bilan tasdiqlash
+  cooldown_ms: 1200
+  barge_in_enabled: true
+  barge_in_threshold_boost: 0.15
+
+stt:
+  engine: "faster_whisper"
+  model: "large-v3-turbo"    # yoki lokal CT2 papka yo'li (o'zbekcha fine-tune)
+  device: "cuda"
+  compute_type: "int8_float16"
+  language: "uz"
+  beam_size: 1
+  kws_model: "small"         # stt_kws rejimi uchun yengil model (cpu yoki cuda)
+  kws_device: "cuda"
+  initial_prompt: "Altron, brauzerni och. Ovozni balandlat. Telegramni och. Eslatma qo'y."
+  no_speech_threshold: 0.6
+  log_prob_threshold: -1.0
+  output_script: "latin"     # har doim lotinga normallashtiriladi
+
+llm:
+  host: "http://127.0.0.1:11434"
+  model: "qwen3:8b"          # Ollama'dagi mavjud Qwen 7-9B tool-calling modeli
+  think: false               # Qwen3 "thinking" rejimi o'chirilgan (latency uchun)
+  temperature: 0.3
+  num_ctx: 8192
+  keep_alive: "-1"           # modelni VRAM'da doim ushlab turish
+  max_tool_iterations: 5
+  history_turns: 8
+  request_timeout_s: 60
+
+fastpath:
+  enabled: true
+
+tts:
+  engine: "mms"
+  model: "facebook/mms-tts-uzb-script_cyrillic"   # 05-bosqichda HF'da tekshiriladi
+  model_script: "cyrillic"   # model qaysi yozuvda o'qitilgan: "cyrillic" | "latin"
+  device: "cpu"
+  speed: 1.0
+  sentence_pause_ms: 150
+
+tools:
+  confirm_dangerous: true
+  confirm_timeout_s: 8
+  files:
+    allowed_roots: ["~/Desktop", "~/Documents", "~/Downloads", "~/Pictures", "~/Music", "~/Videos", "D:/"]
+    max_results: 10
+  browser:
+    default: "chrome"        # "chrome" | "edge" | "default"
+    search_engine: "google"
+  internet_tools_enabled: true   # ob-havo kabi ochiq API'lar (AI emas)
+  weather:
+    city: "Tashkent"
+    lat: 41.2995
+    lon: 69.2401
+
+memory:
+  db_path: "data/db/ultron.sqlite"
+  max_facts_in_prompt: 40
+  save_utterances: true      # 11-bosqich uchun audio + transkript saqlash
+
+conversation:
+  follow_up_window_s: 8
+  end_phrases: ["rahmat", "bo'ldi", "kerak emas", "yaxshi bo'ldi"]
+  cancel_phrases: ["to'xta", "bekor qil", "jim", "stop"]
+
+autostart:
+  startup_delay_s: 20
+  announce_ready: true
+  ollama_start_if_missing: true
+
+logging:
+  level: "INFO"
+  rotation: "10 MB"
+  retention: "14 days"
