@@ -1,0 +1,67 @@
+# docs/tz/10_wake_word_training.md §3.3 -- "(b) sintetik + real (real
+# namunalar oversampling x10)" model. Same as altron_v1.yml except:
+#   - a separate output_dir (so v1's result isn't overwritten -- both get
+#     benchmarked and compared, per §3.5)
+#   - one extra feature_data_files entry pointing at real_positive_features.npy
+#     (built by prepare_real_features.py -- see README.md §3 for why this
+#     mechanism is composed from public-but-undocumented library functions,
+#     unlike everything else in this file)
+#
+# "x10 oversampling" isn't a precise ratio in the TZ -- interpreted here as
+# giving real positives equal per-batch weight to the *synthetic* positive
+# class (batch_n_per_class.positive), despite being under 2% of the raw
+# clip count -- i.e. the model sees a real example about as often as all
+# 20,000 synthetic ones combined. Tune real_positive's weight down if v2
+# overfits to the ~300 real clips (watch its validation accuracy in the
+# training log); scripts/benchmark_wake.py --mode oww is the real judge.
+
+model_name: "altron"
+target_phrase:
+  - "altron"
+  - "al tron"
+  - "ultron"
+  - "oltron"
+  - "altrun"
+  - "ahl-tron"
+custom_negative_phrases:
+  - "elektron"
+  - "patron"
+  - "aldar"
+  - "alt"
+  - "atrof"
+  - "ultra"
+  - "kontrol"
+  - "altin"
+
+n_samples: 20000
+n_samples_val: 2000
+tts_batch_size: 50
+augmentation_batch_size: 16
+piper_sample_generator_path: "./piper-sample-generator"
+output_dir: "./altron_v2"
+
+rir_paths:
+  - "./mit_rirs"
+background_paths:
+  - "./audioset_16k"
+  - "./fma"
+background_paths_duplication_rate:
+  - 1
+  - 1
+false_positive_validation_data_path: "./validation_set_features.npy"
+augmentation_rounds: 1
+
+feature_data_files:
+  ACAV100M_sample: "./openwakeword_features_ACAV100M_2000_hrs_16bit.npy"
+  real_positive: "./real_positive_features.npy"
+batch_n_per_class:
+  ACAV100M_sample: 1024
+  adversarial_negative: 50
+  positive: 50
+  real_positive: 50
+
+model_type: "dnn"
+layer_size: 32
+steps: 50000
+max_negative_weight: 1500
+target_false_positives_per_hour: 0.5

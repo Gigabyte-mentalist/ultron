@@ -4,9 +4,18 @@
 VAD ONNX graph into ``data/models/vad/``). ``--stt`` is implemented by the
 03-STT stage: it pre-downloads the standard faster-whisper checkpoints used
 by ``scripts/benchmark_stt.py`` and converts the two Uzbek fine-tunes chosen
-in docs/tz/03_stt.md to CTranslate2 (int8_float16). ``--tts`` and the
-openWakeWord model (04/05 stages) are filled in by their matching later
-stage; until then they only ensure their folder exists.
+in docs/tz/03_stt.md to CTranslate2 (int8_float16). ``--oww`` is implemented
+by the 04-wake-word stage: it downloads openWakeWord's *shared* feature
+models (melspectrogram + audio embedding, ONNX) into ``data/models/wake/``,
+which is where ``wake/oww_detector.py`` expects to find them next to the
+custom keyword model trained in docs/tz/10_wake_word_training.md (not yet
+run, so ``--oww`` alone does not make wake.mode="oww" usable -- that needs
+the trained model file too). ``--tts`` is implemented by the 05-TTS stage:
+it pre-downloads the two Uzbek MMS-TTS candidates compared in
+``scripts/tts_compare.py`` into ``data/models/tts`` (the ``AutoTokenizer``/
+``VitsModel`` HF cache dir that ``MMSEngine`` also loads from, so this just
+warms the cache -- ``MMSEngine.load()`` works without it too, just slower on
+first run).
 """
 
 from __future__ import annotations
@@ -32,6 +41,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tts", action="store_true", help="TTS modelini yuklash (05-bosqich)")
     parser.add_argument(
         "--vad", action="store_true", help="Silero VAD ONNX modelini nusxalash (02-bosqich)"
+    )
+    parser.add_argument(
+        "--oww",
+        action="store_true",
+        help="openWakeWord umumiy feature modellarini yuklash (04-bosqich)",
     )
     parser.add_argument(
         "--all", action="store_true", help="Barchasini yuklash (keyingi bosqichlar)"
@@ -131,6 +145,50 @@ def download_uzbek_finetunes(models_root: Path) -> list[Path]:
     ]
 
 
+# A bogus name that cannot match any official pretrained model: passing it as
+# ``model_names`` to openwakeword's downloader skips fetching those (we only
+# want the two shared feature-extraction models it always fetches first).
+_NO_OFFICIAL_MODELS = ["__ultron_skip_official_models__"]
+
+
+def download_oww_shared_models(wake_dir: Path) -> None:
+    """Fetch openWakeWord's shared melspectrogram/embedding ONNX models.
+
+    Downloaded next to ``wake.oww_model_path`` (not into
+    ``data_dir/models/wake`` and not into openwakeword's own site-packages
+    resources dir) so ``oww_detector.py`` -- which looks for
+    ``melspectrogram.onnx``/``embedding_model.onnx`` right beside the custom
+    model file -- always finds them regardless of where ``config.local.yaml``
+    points ``app.data_dir`` (``wake.oww_model_path`` is resolved against the
+    project root, not against ``data_dir``, see ``config.py``'s
+    ``_resolve_paths_in_place``).
+    """
+    from openwakeword.utils import download_models
+
+    wake_dir.mkdir(parents=True, exist_ok=True)
+    download_models(model_names=_NO_OFFICIAL_MODELS, target_directory=str(wake_dir))
+    logger.info("openWakeWord feature modellari tayyor: {}", wake_dir)
+
+
+# The two candidates compared in docs/tz/05_tts.md §3.1 / scripts/tts_compare.py.
+_TTS_CANDIDATES = (
+    "facebook/mms-tts-uzb-script_cyrillic",
+    "MuzaffarSharofitdinov/mms-tts-uzbek-girl-voice_cyrillic",
+)
+
+
+def download_tts_models(models_root: Path) -> None:
+    from transformers import AutoTokenizer, VitsModel
+
+    tts_dir = models_root / "tts"
+    tts_dir.mkdir(parents=True, exist_ok=True)
+    for repo_id in _TTS_CANDIDATES:
+        logger.info("TTS modeli yuklanmoqda: {}", repo_id)
+        AutoTokenizer.from_pretrained(repo_id, cache_dir=str(tts_dir))
+        VitsModel.from_pretrained(repo_id, cache_dir=str(tts_dir))
+    logger.info("TTS modellari tayyor: {}", tts_dir)
+
+
 def main(argv: list[str] | None = None) -> int:
     logger.remove()
     logger.add(sys.stdout, format="{message}", level="INFO")
@@ -152,8 +210,11 @@ def main(argv: list[str] | None = None) -> int:
         download_standard_stt_models(models_root)
         download_uzbek_finetunes(models_root)
 
-    if args.tts:
-        logger.info("Haqiqiy TTS model yuklash logikasi 05-TZ bosqichida qo'shiladi.")
+    if args.oww or args.all:
+        download_oww_shared_models(config.wake.oww_model_path.parent)
+
+    if args.tts or args.all:
+        download_tts_models(models_root)
 
     return 0
 

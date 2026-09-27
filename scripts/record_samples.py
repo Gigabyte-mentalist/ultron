@@ -1,13 +1,22 @@
-"""Sample-recording console tool (docs/tz/02_audio.md §3.6).
+"""Sample-recording console tool (docs/tz/02_audio.md §3.6, docs/tz/04_wake_word.md §3.6).
 
     uv run python scripts/record_samples.py mic-test
     uv run python scripts/record_samples.py vad-live
     uv run python scripts/record_samples.py wake --count 100
     uv run python scripts/record_samples.py testset --file prompts_uz.txt
+    uv run python scripts/record_samples.py wake-neg --minutes 30
+    uv run python scripts/record_samples.py wake-hardneg --reps 20
 
 ``wake`` and ``testset`` save to data/recordings/<kind>/NNNN.wav; ``testset``
-additionally appends to transcripts.tsv. Needs a real microphone -- run
-this yourself, Claude Code does not have one.
+additionally appends to transcripts.tsv. ``wake-neg`` records one continuous
+(not VAD-segmented) clip for scripts/benchmark_wake.py's negative set --
+ordinary talking, TV, music, anything *without* the wake word -- and saves
+it to data/recordings/wake_neg/NNNN.wav. ``wake-hardneg`` prompts each of
+docs/tz/10_wake_word_training.md §3.2's "qiyin negativ" words/phrases
+("elektron", "patron", "Aldar", "alt", "atrof", "Ultra", "kontrol", "altin")
+``--reps`` times each (one VAD-isolated utterance per rep, like ``wake``) and
+saves to data/recordings/wake_hardneg/NNNN.wav + transcripts.tsv. Needs a
+real microphone -- run this yourself, Claude Code does not have one.
 """
 
 from __future__ import annotations
@@ -32,6 +41,19 @@ from ultron.events import Utterance
 
 _GRAPH_BUCKET_S = 0.25
 _GRAPH_WIDTH = 40
+
+# docs/tz/10_wake_word_training.md §3.2: "qiyin negativ"lar -- fonetik jihatdan
+# "altron"/"ultron"ga yaqin so'zlar, har biri kamida 20 marta yoziladi.
+_HARD_NEGATIVE_WORDS = [
+    "elektron",
+    "patron",
+    "Aldar",
+    "alt",
+    "atrof",
+    "Ultra",
+    "kontrol",
+    "altin",
+]
 
 
 def _vad_model_path(config: RootConfig) -> Path:
@@ -203,6 +225,43 @@ async def cmd_wake(config: RootConfig, count: int) -> None:
     await _record_batch(config, kind="wake", total=count, prompts=None)
 
 
+async def cmd_wake_neg(config: RootConfig, minutes: float) -> None:
+    out_dir = Path(config.app.data_dir) / "recordings" / "wake_neg"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / f"{_next_sample_index(out_dir):04d}.wav"
+
+    capture = _make_capture(config)
+    frames_needed = int(minutes * 60 * config.audio.sample_rate / config.audio.block_size)
+
+    logger.info(
+        "{:.0f} daqiqa yozib olinmoqda (oddiy gap/TV/musiqa, wake so'zsiz).",
+        minutes,
+    )
+    logger.info("To'xtatish uchun Ctrl+C.")
+    frames_per_minute = 60 * config.audio.sample_rate // config.audio.block_size
+    chunks: list[np.ndarray] = []
+    n = 0
+    try:
+        async for frame in capture.frames():
+            chunks.append(frame.pcm)
+            n += 1
+            if n % (5 * frames_per_minute) == 0:
+                logger.info("{:.1f} daqiqa yozildi...", n / frames_per_minute)
+            if n >= frames_needed:
+                break
+    finally:
+        capture.stop()
+
+    pcm = np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.int16)
+    sf.write(target, pcm, config.audio.sample_rate, subtype="PCM_16")
+    logger.info("Saqlandi: {} ({:.1f} daqiqa)", target, len(pcm) / config.audio.sample_rate / 60)
+
+
+async def cmd_wake_hardneg(config: RootConfig, reps: int) -> None:
+    prompts = [word for _ in range(reps) for word in _HARD_NEGATIVE_WORDS]
+    await _record_batch(config, kind="wake_hardneg", total=len(prompts), prompts=prompts)
+
+
 async def cmd_testset(config: RootConfig, prompts_file: Path) -> None:
     if not prompts_file.is_file():
         raise SystemExit(f"Prompts fayli topilmadi: {prompts_file}")
@@ -222,6 +281,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     p_wake = sub.add_parser("wake", help="Wake word namunalarini yozish (04/10-bosqich uchun)")
     p_wake.add_argument("--count", type=int, default=100)
+
+    p_wake_neg = sub.add_parser(
+        "wake-neg", help="Wake benchmark uchun uzluksiz negativ namuna yozish (04-bosqich)"
+    )
+    p_wake_neg.add_argument("--minutes", type=float, default=30.0)
+
+    p_wake_hardneg = sub.add_parser(
+        "wake-hardneg", help="Qiyin negativ so'zlarni yozish (10-bosqich)"
+    )
+    p_wake_hardneg.add_argument("--reps", type=int, default=20)
 
     p_testset = sub.add_parser("testset", help="STT test to'plamini yozish (03-bosqich uchun)")
     p_testset.add_argument("--file", type=Path, required=True)
@@ -247,6 +316,10 @@ def main(argv: list[str] | None = None) -> int:
             asyncio.run(cmd_vad_live(config))
         elif args.command == "wake":
             asyncio.run(cmd_wake(config, args.count))
+        elif args.command == "wake-neg":
+            asyncio.run(cmd_wake_neg(config, args.minutes))
+        elif args.command == "wake-hardneg":
+            asyncio.run(cmd_wake_hardneg(config, args.reps))
         elif args.command == "testset":
             asyncio.run(cmd_testset(config, args.file))
     except KeyboardInterrupt:

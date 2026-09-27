@@ -34,10 +34,19 @@ dependencies = [
   "httpx",
   "mss",
   "silero-vad>=6.2.3",
+  "openwakeword>=0.6.0",
+  "watchdog>=6.0.0",
+  "pynput>=1.8.2",
 ]
 
 [dependency-groups]
-dev = ["pytest", "pytest-asyncio", "ruff", "jiwer"]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+    "jiwer",
+    "freezegun>=1.5.5",
+]
 
 [[tool.uv.index]]
 name = "pytorch-cu126"

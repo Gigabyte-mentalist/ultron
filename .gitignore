@@ -6,6 +6,25 @@ __pycache__/
 *.onnx
 *.wav
 !tests/data/*.wav
+*.flac
+!tests/data/*.flac
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+
+# training/ (docs/tz/10, docs/tz/11): only the *scripts/configs* are meant to
+# be committed. Actual training runs (models, checkpoints, downloaded
+# open-dataset audio) land in these WSL-side working dirs -- multi-GB,
+# personal-voice-derived, and regenerable from the scripts + a data source,
+# never meant to be committed.
+training/wake/altron_v*/
+training/stt/open_datasets/
+training/stt/checkpoints/
+training/stt/mix_train.jsonl
+training/stt/mix_dev.jsonl
+training/stt/active_config.yaml
+training/stt/active_config.yml
+
+# Local machine-specific overrides / secrets, if ever added.
+.env
+*.local

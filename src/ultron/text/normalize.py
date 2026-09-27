@@ -23,6 +23,25 @@ _WAKE_WORD_RE = re.compile(
 )
 _CANONICAL_WAKE_WORD = "Altron"
 
+# Longest-first so "-ning"/"-dan" aren't shadowed by a shorter suffix that
+# happens to be one of their own trailing letters.
+_UZ_CASE_SUFFIXES: tuple[str, ...] = ("ning", "dan", "ni", "ga", "da")
+
+
+def strip_uz_suffixes(word: str) -> str:
+    """Strip one trailing Uzbek case suffix (docs/tz/07_tools.md §7A.1), so a
+    spoken app/folder name like "telegramni" or "hujjatlarga" resolves to the
+    bare "telegram"/"hujjatlar" an index/alias table is keyed by.
+
+    Only ever removes one suffix, and only when at least 2 characters of stem
+    remain, so short names ("da", "ga") are left untouched.
+    """
+    lowered = word.strip().lower()
+    for suffix in _UZ_CASE_SUFFIXES:
+        if lowered.endswith(suffix) and len(lowered) - len(suffix) >= 2:
+            return lowered[: -len(suffix)]
+    return lowered
+
 
 def normalize_transcript(raw: str) -> str:
     """Clean up one raw STT hypothesis into normalized, Latin-script text."""

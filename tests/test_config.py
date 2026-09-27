@@ -69,6 +69,31 @@ def test_relative_paths_resolved_against_project_root(tmp_path: Path) -> None:
     assert config.memory.db_path == tmp_path / "data" / "db" / "ultron.sqlite"
 
 
+def test_oww_verifier_path_resolved_against_project_root_when_set(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    _write(
+        config_dir / "config.yaml",
+        "wake:\n  oww_verifier_path: data/models/wake/altron_verifier.pkl\n",
+    )
+
+    config = load_config(config_dir / "config.yaml")
+
+    assert config.wake.oww_verifier_path == tmp_path / "data" / "models" / "wake" / (
+        "altron_verifier.pkl"
+    )
+
+
+def test_oww_verifier_path_stays_none_by_default(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    _write(config_dir / "config.yaml", "app:\n  name: Ultron\n")
+
+    config = load_config(config_dir / "config.yaml")
+
+    assert config.wake.oww_verifier_path is None
+
+
 def test_allowed_roots_expand_user_home(tmp_path: Path) -> None:
     config_dir = tmp_path / "config"
     config_dir.mkdir()

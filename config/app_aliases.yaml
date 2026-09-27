@@ -1,0 +1,15 @@
+# O'zbekcha ilova nomlari -> qidirilishi kerak bo'lgan (ingliz/kanonik) nom
+# (docs/tz/07_tools.md §7A.1). AppIndex.find() bu jadvalni normalize qilingan
+# so'rov (strip_uz_suffixes bilan) ustida to'g'ridan-to'g'ri qidiradi; qiymat
+# keyin .lnk/Store nomlari orasidan aniq/fuzzy moslikni topish uchun ishlatiladi.
+brauzer: chrome
+xrom: chrome
+bloknot: notepad
+kalkulyator: calc
+telegram: telegram
+fayllar: explorer
+provodnik: explorer
+sozlamalar: sozlamalar
+vs kod: code
+vord: winword
+eksel: excel

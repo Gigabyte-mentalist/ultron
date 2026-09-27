@@ -63,6 +63,19 @@ Oxirida "Qabul mezonlari" bo'limidagi har bir bandni tekshir va natijani jadval 
 
 ---
 
+## Avtostart va parolsiz kirish (ixtiyoriy)
+
+`scripts/install_autostart.ps1` Windows Task Scheduler'ga "Ultron" vazifasini qo'shadi (login paytida + workstation unlock'da, admin **shart emas**) — batafsil: `docs/tz/09_autostart.md`, qo'lda tekshiruvlar: `docs/manual_tests_09.md`.
+
+Bu login ekranini o'zi o'tkazib yubormaydi — laptop yoqilgach baribir parol kiritish kerak bo'ladi, shundan keyingina Ultron avtomatik ishga tushadi. Agar login ekranisiz, laptop yoqilishi bilanoq Ultron ishlashini xohlasangiz, Windows'ning **avtomatik kirish** (autologon) imkoniyatidan foydalanish mumkin:
+
+- `netplwiz` (Boshlash menyusidan ishga tushirish) → "Users must enter a password..." belgisini olib tashlash, yoki
+- Sysinternals **Autologon** (`https://learn.microsoft.com/sysinternals/downloads/autologon`) — parolni shifrlangan holda saqlaydi, `netplwiz`ga qaraganda xavfsizroq.
+
+**Muhim:** bu laptop **xavfsizligini pasaytiradi** — kompyuterni har kim yoqib, hech qanday parolsiz Windows sessiyasiga kira oladi. TZ bunga majburlamaydi; qaror to'liq foydalanuvchi zimmasida.
+
+---
+
 ## Muhim ochiq eslatmalar
 
 - **O'zbek tili — eng katta xavf.** Whisper va Qwen o'zbekchada ingliz tilidagidek kuchli emas. Shuning uchun TZ'da benchmark'lar, normallashtirish qatlamlari va "fast-path" (LLM'siz tez buyruqlar) qo'shilgan. 11-bosqich aynan shu muammoni hal qilish uchun.

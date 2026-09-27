@@ -1,0 +1,170 @@
+# LLM/tool-calling eval dataset (docs/tz/06_llm.md §3.8).
+# expected_tool: null means no tool call is expected at all.
+# expected_args: partial/semantic match (scripts/eval_llm_tools.py's _values_match) --
+#   an "expression" value is compared by evaluated numeric result, not exact text.
+# must_contain: optional; substrings the final spoken response text must contain.
+
+# -- get_time ----------------------------------------------------------------
+- input: "Soat nechi?"
+  expected_tool: get_time
+- input: "Hozir soat necha bo'ldi?"
+  expected_tool: get_time
+- input: "Nima vaqt?"
+  expected_tool: get_time
+- input: "soat nechi"
+  expected_tool: get_time
+- input: "Soat nechi bo'ldi hozir?"
+  expected_tool: get_time
+- input: "Hozir vaqt necha?"
+  expected_tool: get_time
+- input: "Nechi bo'ldi?"
+  expected_tool: get_time
+- input: "Soat nechada hozir?"
+  expected_tool: get_time
+- input: "Vaqtni ayta olasizmi?"
+  expected_tool: get_time
+- input: "Hozirgi vaqtni ayt."
+  expected_tool: get_time
+- input: "Soat nechi ekan?"
+  expected_tool: get_time
+- input: "Nechanchi soat hozir?"
+  expected_tool: get_time
+
+# -- get_date ------------------------------------------------------------------
+- input: "Bugun nechanchi sana?"
+  expected_tool: get_date
+- input: "Bugun necha sana?"
+  expected_tool: get_date
+- input: "Qaysi sana bugun?"
+  expected_tool: get_date
+- input: "Bugungi sana nima?"
+  expected_tool: get_date
+- input: "Sana nechada hozir?"
+  expected_tool: get_date
+- input: "Bugun oyning nechasi?"
+  expected_tool: get_date
+- input: "Hozir qaysi kun ekan?"
+  expected_tool: get_date
+- input: "Bugungi kalendar sanasini ayt."
+  expected_tool: get_date
+- input: "Nechanchi sanadamiz?"
+  expected_tool: get_date
+- input: "Bugun necha-nchi kun?"
+  expected_tool: get_date
+
+# -- calculate -------------------------------------------------------------
+- input: "17 ni 23 ga ko'paytir"
+  expected_tool: calculate
+  expected_args: {expression: "17 * 23"}
+- input: "100 dan 37 ni ayir"
+  expected_tool: calculate
+  expected_args: {expression: "100 - 37"}
+- input: "45 qo'shilsa 55 ga necha bo'ladi"
+  expected_tool: calculate
+  expected_args: {expression: "45 + 55"}
+- input: "144 ni 12 ga bo'l"
+  expected_tool: calculate
+  expected_args: {expression: "144 / 12"}
+- input: "9 ning kvadrati nechaga teng"
+  expected_tool: calculate
+  expected_args: {expression: "9 * 9"}
+- input: "ikki yuz plyus qirq nechaga teng"
+  expected_tool: calculate
+  expected_args: {expression: "200 + 40"}
+- input: "500 ni 4 ga bo'l"
+  expected_tool: calculate
+  expected_args: {expression: "500 / 4"}
+- input: "7 marta 8 necha bo'ladi"
+  expected_tool: calculate
+  expected_args: {expression: "7 * 8"}
+- input: "1000 dan 250 ni ayirganda nima qoladi"
+  expected_tool: calculate
+  expected_args: {expression: "1000 - 250"}
+- input: "30 va 12 ni qo'shsang nima bo'ladi"
+  expected_tool: calculate
+  expected_args: {expression: "30 + 12"}
+- input: "12 ni 4 ga qo'shib, keyin 3 ga ko'paytir"
+  expected_tool: calculate
+  expected_args: {expression: "(12 + 4) * 3"}
+- input: "64 ning kvadrat ildizidan boshqa, 8 ni 2 ga ko'paytir"
+  expected_tool: calculate
+  expected_args: {expression: "8 * 2"}
+
+# -- conversational / no tool -------------------------------------------------
+- input: "Salom"
+  expected_tool: null
+- input: "Ismingiz nima?"
+  expected_tool: null
+- input: "Rahmat"
+  expected_tool: null
+- input: "Bugun kayfiyatingiz qanday?"
+  expected_tool: null
+- input: "Sen kimsan?"
+  expected_tool: null
+- input: "Menga bir hazil ayt"
+  expected_tool: null
+- input: "Windows nima o'zi?"
+  expected_tool: null
+- input: "Menga yordam kerak"
+  expected_tool: null
+- input: "Bo'ldi, rahmat"
+  expected_tool: null
+- input: "Iltimos yordam ber"
+  expected_tool: null
+
+# -- system_tools (docs/tz/07_tools.md §7A) -------------------------------------
+- input: "Telegram degan dasturni ochib ber"
+  expected_tool: open_app
+- input: "Brauzerni ishga tushir"
+  expected_tool: open_app
+- input: "Bloknot dasturini yopib qo'y"
+  expected_tool: close_app
+- input: "Ovoz balandligini qirq foizga sozla"
+  expected_tool: set_volume
+  expected_args: {level: 40}
+- input: "Karnayni butunlay o'chirib qo'y"
+  expected_tool: mute
+  expected_args: {muted: true}
+- input: "Ekran yorug'ligini yetmish foizga o'rnat"
+  expected_tool: set_brightness
+  expected_args: {level: 70}
+- input: "Kompyuterni hozir qulflab qo'y"
+  expected_tool: lock_screen
+- input: "Ekrandan skrinshot olib ber"
+  expected_tool: screenshot
+- input: "Batareya va protsessor holatini tekshir"
+  expected_tool: get_system_status
+- input: "Hozir qaysi dasturlar ishlab turibdi?"
+  expected_tool: list_running_apps
+
+# -- file_tools (docs/tz/07_tools.md §7B) ---------------------------------------
+- input: "Rezyume nomli faylni qidirib top"
+  expected_tool: search_files
+- input: "Yuklamalar papkasini ochib ber"
+  expected_tool: open_folder
+- input: "Ish stolimda 'Loyiha' nomli yangi papka yasab ber"
+  expected_tool: create_folder
+- input: "Eng oxirgi yuklab olingan faylni ko'rsat"
+  expected_tool: recent_files
+
+# -- browser_tools (docs/tz/07_tools.md §7C) ------------------------------------
+- input: "kun.uz saytini ochib ber"
+  expected_tool: open_url
+- input: "Google orqali Python asyncio haqida qidiruv qil"
+  expected_tool: web_search
+- input: "YouTube'da lofi musiqa qo'yib ber"
+  expected_tool: youtube_search
+- input: "Toshkentda hozir ob-havo qanday ekan?"
+  expected_tool: get_weather
+
+# -- memory/reminder_tools (docs/tz/07_tools.md §7D) ----------------------------
+- input: "Mening ismim Ali ekanini yodingda tut"
+  expected_tool: remember_fact
+- input: "Mening ismim haqida nima bilasan?"
+  expected_tool: recall_facts
+- input: "Besh daqiqadan keyin choy ichishimni eslatib qo'y"
+  expected_tool: set_reminder
+- input: "O'n daqiqaga taymer qo'yib ber"
+  expected_tool: set_timer
+- input: "Menda qanday eslatmalar qo'yilgan?"
+  expected_tool: list_reminders

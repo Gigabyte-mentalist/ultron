@@ -1,0 +1,59 @@
+# docs/tz/10_wake_word_training.md §3.3 -- "(a) faqat sintetik" model.
+# Run from ~/oww_train/ (run_training.sh copies this file there) -- every
+# path below is relative to that directory, matching where setup_env.sh
+# downloaded everything.
+
+model_name: "altron"
+target_phrase:
+  - "altron"
+  - "al tron"
+  - "ultron"
+  - "oltron"
+  - "altrun"
+  - "ahl-tron"
+custom_negative_phrases:
+  - "elektron"
+  - "patron"
+  - "aldar"
+  - "alt"
+  - "atrof"
+  - "ultra"
+  - "kontrol"
+  - "altin"
+
+# docs/tz/10 §3.2: "kamida 20 000 klip" (the library's own docs recommend
+# the same floor, "often 100,000+ is best" -- see training/wake/README.md §8
+# to grow this later).
+n_samples: 20000
+n_samples_val: 2000
+tts_batch_size: 50
+augmentation_batch_size: 16
+piper_sample_generator_path: "./piper-sample-generator"
+output_dir: "./altron_v1"
+
+rir_paths:
+  - "./mit_rirs"
+background_paths:
+  - "./audioset_16k"
+  - "./fma"
+background_paths_duplication_rate:
+  - 1
+  - 1
+false_positive_validation_data_path: "./validation_set_features.npy"
+augmentation_rounds: 1
+
+feature_data_files:
+  ACAV100M_sample: "./openwakeword_features_ACAV100M_2000_hrs_16bit.npy"
+batch_n_per_class:
+  ACAV100M_sample: 1024
+  adversarial_negative: 50
+  positive: 50
+
+model_type: "dnn"
+layer_size: 32
+steps: 50000
+max_negative_weight: 1500
+# docs/tz/10 §3.3: "Target false accept: ≤ 0.5/soat" -- openWakeWord expresses
+# this as a *training-time* target the auto-trainer optimizes toward, not a
+# guarantee; scripts/benchmark_wake.py --mode oww measures the real result.
+target_false_positives_per_hour: 0.5
