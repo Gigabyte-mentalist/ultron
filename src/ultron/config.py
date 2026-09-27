@@ -64,6 +64,10 @@ class WakeConfig(BaseModel):
     oww_model_path: Path = Path("data/models/wake/altron.onnx")
     oww_threshold: float = Field(default=0.35, ge=0.0, le=1.0)
     oww_verify_with_stt: bool = True
+    # docs/tz/10_wake_word_training.md §3.4: shaxsiy ovoz verifier (ixtiyoriy --
+    # oiladagi boshqa odamlar ham foydalanishi kerak bo'lsa null qoldiriladi).
+    oww_verifier_path: Path | None = None
+    oww_verifier_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
     cooldown_ms: int = Field(default=1200, ge=0)
     barge_in_enabled: bool = True
     barge_in_threshold_boost: float = Field(default=0.15, ge=0.0, le=1.0)
@@ -138,6 +142,7 @@ class WeatherConfig(BaseModel):
 class ToolsConfig(BaseModel):
     confirm_dangerous: bool = True
     confirm_timeout_s: int = Field(default=8, ge=1)
+    app_aliases_path: Path = Path("config/app_aliases.yaml")
     files: FilesToolConfig = Field(default_factory=FilesToolConfig)
     browser: BrowserToolConfig = Field(default_factory=BrowserToolConfig)
     internet_tools_enabled: bool = True
@@ -164,12 +169,29 @@ class AutostartConfig(BaseModel):
     startup_delay_s: int = Field(default=20, ge=0)
     announce_ready: bool = True
     ollama_start_if_missing: bool = True
+    # docs/tz/09_autostart.md §3.4: added by TZ-09, not part of 00-TZ's
+    # original schema table -- global wake fallback via pynput, off by
+    # default risk (a background key listener) is opt-out, not opt-in,
+    # since the TZ describes it as the "ixtiyoriy" wake-word-failed backstop.
+    hotkey_enabled: bool = True
+    hotkey: str = "<ctrl>+<alt>+u"
 
 
 class LoggingConfig(BaseModel):
     level: str = "INFO"
     rotation: str = "10 MB"
     retention: str = "14 days"
+
+
+class CompanionConfig(BaseModel):
+    """Visual companion overlay -- not part of any TZ, added after MVP+TZ-10/11
+    at the user's own request: a small always-on-top face widget whose eyes
+    glow while Ultron is speaking (``ultron.companion``)."""
+
+    enabled: bool = True
+    position: Literal["bottom_right", "bottom_left", "top_right", "top_left"] = "bottom_right"
+    size: int = Field(default=220, ge=64, le=600)
+    margin: int = Field(default=24, ge=0)
 
 
 class RootConfig(BaseModel):
@@ -186,6 +208,7 @@ class RootConfig(BaseModel):
     conversation: ConversationConfig = Field(default_factory=ConversationConfig)
     autostart: AutostartConfig = Field(default_factory=AutostartConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    companion: CompanionConfig = Field(default_factory=CompanionConfig)
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
@@ -223,16 +246,22 @@ def _resolve_paths_in_place(data: dict, project_root: Path) -> None:
     wake = data.get("wake")
     if isinstance(wake, dict) and "oww_model_path" in wake:
         wake["oww_model_path"] = _resolve_path(wake["oww_model_path"], project_root)
+    if isinstance(wake, dict) and wake.get("oww_verifier_path") is not None:
+        wake["oww_verifier_path"] = _resolve_path(wake["oww_verifier_path"], project_root)
 
     memory = data.get("memory")
     if isinstance(memory, dict) and "db_path" in memory:
         memory["db_path"] = _resolve_path(memory["db_path"], project_root)
 
-    files = data.get("tools", {}).get("files") if isinstance(data.get("tools"), dict) else None
-    if isinstance(files, dict) and "allowed_roots" in files:
-        files["allowed_roots"] = [
-            _resolve_path(root, project_root) for root in files["allowed_roots"]
-        ]
+    tools = data.get("tools")
+    if isinstance(tools, dict):
+        if "app_aliases_path" in tools:
+            tools["app_aliases_path"] = _resolve_path(tools["app_aliases_path"], project_root)
+        files = tools.get("files")
+        if isinstance(files, dict) and "allowed_roots" in files:
+            files["allowed_roots"] = [
+                _resolve_path(root, project_root) for root in files["allowed_roots"]
+            ]
 
 
 def _format_validation_error(path: Path, exc: ValidationError) -> str:

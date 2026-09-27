@@ -23,11 +23,13 @@ vad:
 wake:
   mode: "stt_kws"            # "stt_kws" | "oww" | "hybrid"
   phrases: ["altron", "ultron", "oltron", "altiron", "ultiron", "алтрон", "ультрон", "олтрон"]
-  fuzzy_threshold: 82        # rapidfuzz ratio, 0-100
+  fuzzy_threshold: 75        # rapidfuzz ratio, 0-100
   max_prefix_words: 2        # wake word gapning birinchi N so'zida bo'lishi kerak
   oww_model_path: "data/models/wake/altron.onnx"
   oww_threshold: 0.35
   oww_verify_with_stt: true  # oww trigger'ini STT bilan tasdiqlash
+  oww_verifier_path: null    # 10-TZ §3.4: "data/models/wake/altron_verifier.pkl" -- shaxsiy ovoz verifier, o'qitilgach to'ldiriladi
+  oww_verifier_threshold: 0.3
   cooldown_ms: 1200
   barge_in_enabled: true
   barge_in_threshold_boost: 0.15
@@ -39,7 +41,7 @@ stt:
   compute_type: "int8_float16"
   language: "uz"
   beam_size: 1
-  kws_model: "small"         # stt_kws rejimi uchun yengil model (cpu yoki cuda)
+  kws_model: "D:/ultron_data/models/stt/islomov-rubaistt-v2-medium-ct2"    # stt_kws uchun; standart "small" o'zbekchada "Altron" so'zini hallyutsinatsiya qilardi (04-TZ benchmark, wake_benchmark_20260927.md) — asosiy model bilan bir xil, qo'shimcha VRAM kerak emas
   kws_device: "cuda"
   initial_prompt: "Altron, brauzerni och. Ovozni balandlat. Telegramni och. Eslatma qo'y."
   no_speech_threshold: 0.6
@@ -62,7 +64,7 @@ fastpath:
 
 tts:
   engine: "mms"
-  model: "facebook/mms-tts-uzb-script_cyrillic"   # 05-bosqichda HF'da tekshiriladi
+  model: "facebook/mms-tts-uzb-script_cyrillic"    # 05-TZ §3.1: 2 nomzod solishtirildi, RTF ikkalasida ham teng (0.257); foydalanuvchi eshitib baholadi -- g'olib: facebook (o'rtacha ball 4.87/5 vs Muzaffar fine-tune 3.07/5), data/reports/tts_compare/scores.tsv
   model_script: "cyrillic"   # model qaysi yozuvda o'qitilgan: "cyrillic" | "latin"
   device: "cpu"
   speed: 1.0
@@ -71,6 +73,7 @@ tts:
 tools:
   confirm_dangerous: true
   confirm_timeout_s: 8
+  app_aliases_path: "config/app_aliases.yaml"
   files:
     allowed_roots: ["~/Desktop", "~/Documents", "~/Downloads", "~/Pictures", "~/Music", "~/Videos", "D:/"]
     max_results: 10
@@ -97,8 +100,16 @@ autostart:
   startup_delay_s: 20
   announce_ready: true
   ollama_start_if_missing: true
+  hotkey_enabled: true       # 09-TZ §3.4: wake word ishlamay qolgan holatlar uchun zaxira
+  hotkey: "<ctrl>+<alt>+u"
 
 logging:
   level: "INFO"
   rotation: "10 MB"
   retention: "14 days"
+
+companion:
+  enabled: true              # kichik burchakdagi ko'zlari qizil yonuvchi "Altron" hamroh oynasi
+  position: "bottom_right"   # "bottom_right" | "bottom_left" | "top_right" | "top_left"
+  size: 220
+  margin: 24
